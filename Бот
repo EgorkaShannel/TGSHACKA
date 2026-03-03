@@ -1,0 +1,32 @@
+import telebot
+import requests
+import json
+from telebot import types
+
+bot = telebot.TeleBot("7272599652:AAEIjzrWB3lTLod1CQBL2gKtR85IVHZ064o")
+API = "2b787021d98d994b66e87bfee2a0f68f"
+
+
+@bot.message_handler(commands=["start"])
+def start(message):
+    bot.send_message(message.chat.id, f"Привет, {message.from_user.first_name}. Напиши в каком городе хочешь узнать погоду")
+
+
+@bot.message_handler(content_types=["text"])
+def get_weather(message):
+    city = message.text.strip().lower()
+    res = requests.get(f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={API}&units=metric&lang=ru")
+    if res.status_code == 200:
+        data = json.loads(res.text)
+        temp = data["main"]["temp"]
+        feels_like=data["main"]["feels_like"]
+        humidity=data["main"]["humidity"]
+        weather_desc=data["weather"][0]["description"]
+        speed=data["wind"]["speed"]
+        bot.reply_to(message, f"🌡Температура: {temp}°C\nОщущается как: {feels_like}°C\n💦Влажность: {humidity}%")
+        bot.send_message(message.chat.id, f"💨Ветер: {speed}м/с\n Осадки: {weather_desc}")
+    else:
+        bot.reply_to(message, f"Город указан не верно❌")
+
+
+bot.polling(non_stop=True)
